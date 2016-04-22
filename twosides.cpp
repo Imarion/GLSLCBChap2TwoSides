@@ -84,15 +84,15 @@ void MyWindow::initialize()
     mRotationMatrixLocation = mProgram->uniformLocation("RotationMatrix");
 
     glFrontFace(GL_CCW);
-    glCullFace(GL_BACK);
-    glEnable(GL_CULL_FACE);
+    //glCullFace(GL_BACK);
+    //glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
 }
 
 void MyWindow::CreateVertexBuffer()
 {
     QMatrix4x4 transform;
-    transform.translate(QVector3D(0.0f,1.5f,0.25f));
+    transform.translate(QVector3D(0.0f, 1.5f, 0.25f));
     mTeapot = new Teapot(13, transform);
 
     // Create and populate the buffer objects
@@ -178,11 +178,11 @@ void MyWindow::render()
 
     mProgram->bind();
     {
-        QVector4D worldLight = QVector4D(2.0f,4.0f,2.0f,1.0f);
+        QVector4D worldLight = QVector4D(2.0f, 4.0f, 2.0f, 1.0f);
+        mProgram->setUniformValue("Light.Position", ViewMatrix * worldLight );
 
         mProgram->setUniformValue("Material.Kd", 0.9f, 0.5f, 0.3f);
         mProgram->setUniformValue("Light.Ld", 1.0f, 1.0f, 1.0f);
-        mProgram->setUniformValue("Light.Position", ViewMatrix * ModelMatrix * worldLight );
         mProgram->setUniformValue("Material.Ka", 0.9f, 0.5f, 0.3f);
         mProgram->setUniformValue("Light.La", 0.4f, 0.4f, 0.4f);
         mProgram->setUniformValue("Material.Ks", 0.8f, 0.8f, 0.8f);
@@ -213,13 +213,15 @@ void MyWindow::initShaders()
 
     //mTreeProgram
     // Shader 1
-    shaderFile.setFileName(":/vshader_ads.txt");
+    //shaderFile.setFileName(":/vshader_ads.txt");
+    shaderFile.setFileName(":/vshader_2sides.txt");
     shaderFile.open(QIODevice::ReadOnly);
     shaderSource = shaderFile.readAll();
     shaderFile.close();
     qDebug() << "vertex tree compile: " << vShader.compileSourceCode(shaderSource);
 
-    shaderFile.setFileName(":/fshader_ads.txt");
+    //shaderFile.setFileName(":/fshader_ads.txt");
+    shaderFile.setFileName(":/fshader_2sides.txt");
     shaderFile.open(QIODevice::ReadOnly);
     shaderSource = shaderFile.readAll();
     shaderFile.close();

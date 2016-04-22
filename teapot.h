@@ -25,7 +25,7 @@ private:
 
     void generateVerts(float * , float * ,float *, unsigned int *, float , float);
 
-    void generatePatches(float * v, float * n, float *tc, unsigned int* el, int grid);
+    void generatePatches(float * in_v, float * in_n, float *in_tc, unsigned int* in_el, int grid);
     void buildPatchReflect(int patchNum,
                            float *B, float *dB,
                            float *v, float *n, float *, unsigned int *el,
@@ -33,7 +33,7 @@ private:
                            bool reflectX, bool reflectY);
     void buildPatch(QVector3D patch[][4],
                     float *B, float *dB,
-                    float *v, float *n, float *, unsigned int *el,
+                    float *in_v, float *in_n, float *in_tc, unsigned int *in_el,
                     int &index, int &elIndex, int &, int grid, QMatrix3x3 reflect, bool invertNormal);
     void getPatch( int patchNum, QVector3D patch[][4], bool reverseV );
 

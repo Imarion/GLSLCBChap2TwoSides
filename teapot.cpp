@@ -27,7 +27,7 @@ Teapot::Teapot(int grid, const QMatrix4x4 & lidTransform)
     moveLid(grid, v, lidTransform);
 }
 
-void Teapot::generatePatches(float * v, float * n, float * tc, unsigned int* el, int grid) {
+void Teapot::generatePatches(float * in_v, float * in_n, float * in_tc, unsigned int* in_el, int grid) {
     float * B = new float[4*(grid+1)];  // Pre-computed Bernstein basis functions
     float * dB = new float[4*(grid+1)]; // Pre-computed derivitives of basis functions
 
@@ -39,34 +39,34 @@ void Teapot::generatePatches(float * v, float * n, float * tc, unsigned int* el,
 
     // Build each patch
     // The rim
-    buildPatchReflect(0, B, dB, v, n, tc, el, idx, elIndex, tcIndex, grid, true, true);
+    buildPatchReflect(0, B, dB, in_v, in_n, in_tc, in_el, idx, elIndex, tcIndex, grid, true, true);
     // The body
-    buildPatchReflect(1, B, dB, v, n, tc, el, idx, elIndex, tcIndex, grid, true, true);
-    buildPatchReflect(2, B, dB, v, n, tc, el, idx, elIndex, tcIndex, grid, true, true);
+    buildPatchReflect(1, B, dB, in_v, in_n, in_tc, in_el, idx, elIndex, tcIndex, grid, true, true);
+    buildPatchReflect(2, B, dB, in_v, in_n, in_tc, in_el, idx, elIndex, tcIndex, grid, true, true);
     // The lid
-    buildPatchReflect(3, B, dB, v, n, tc, el, idx, elIndex, tcIndex, grid, true, true);
-    buildPatchReflect(4, B, dB, v, n, tc, el, idx, elIndex, tcIndex, grid, true, true);
+    buildPatchReflect(3, B, dB, in_v, in_n, in_tc, in_el, idx, elIndex, tcIndex, grid, true, true);
+    buildPatchReflect(4, B, dB, in_v, in_n, in_tc, in_el, idx, elIndex, tcIndex, grid, true, true);
     // The bottom
-    buildPatchReflect(5, B, dB, v, n, tc, el, idx, elIndex, tcIndex, grid, true, true);
+    buildPatchReflect(5, B, dB, in_v, in_n, in_tc, in_el, idx, elIndex, tcIndex, grid, true, true);
     // The handle
-    buildPatchReflect(6, B, dB, v, n, tc, el, idx, elIndex, tcIndex, grid, false, true);
-    buildPatchReflect(7, B, dB, v, n, tc, el, idx, elIndex, tcIndex, grid, false, true);
+    buildPatchReflect(6, B, dB, in_v, in_n, in_tc, in_el, idx, elIndex, tcIndex, grid, false, true);
+    buildPatchReflect(7, B, dB, in_v, in_n, in_tc, in_el, idx, elIndex, tcIndex, grid, false, true);
     // The spout
-    buildPatchReflect(8, B, dB, v, n, tc, el, idx, elIndex, tcIndex, grid, false, true);
-    buildPatchReflect(9, B, dB, v, n, tc, el, idx, elIndex, tcIndex, grid, false, true);
+    buildPatchReflect(8, B, dB, in_v, in_n, in_tc, in_el, idx, elIndex, tcIndex, grid, false, true);
+    buildPatchReflect(9, B, dB, in_v, in_n, in_tc, in_el, idx, elIndex, tcIndex, grid, false, true);
 
     delete [] B;
     delete [] dB;
 }
 
-void Teapot::moveLid(int grid, float *v, const QMatrix4x4 & lidTransform) {
+void Teapot::moveLid(int grid, float *in_v, const QMatrix4x4 & lidTransform) {
 
     int start = 3 * 12 * (grid+1) * (grid+1);
     int end = 3 * 20 * (grid+1) * (grid+1);
 
     for( int i = start; i < end; i+=3 )
     {
-        QVector4D vert = QVector4D(v[i], v[i+1], v[i+2], 1.0f );
+        QVector4D vert = QVector4D(in_v[i], in_v[i+1], in_v[i+2], 1.0f );
         vert = lidTransform * vert;
         v[i] = vert.x();
         v[i+1] = vert.y();
@@ -76,8 +76,8 @@ void Teapot::moveLid(int grid, float *v, const QMatrix4x4 & lidTransform) {
 
 void Teapot::buildPatchReflect(int patchNum,
                                     float *B, float *dB,
-                                    float *v, float *n,
-                                    float *tc, unsigned int *el,
+                                    float *in_v, float *in_n,
+                                    float *in_tc, unsigned int *in_el,
                                     int &index, int &elIndex, int &tcIndex, int grid,
                                     bool reflectX, bool reflectY)
 {
@@ -87,7 +87,7 @@ void Teapot::buildPatchReflect(int patchNum,
     getPatch(patchNum, patchRevV, true);
 
     // Patch without modification
-    buildPatch(patch, B, dB, v, n, tc, el,
+    buildPatch(patch, B, dB, in_v, in_n, in_tc, in_el,
                index, elIndex, tcIndex, grid, QMatrix3x3(), true);
 
     // Patch reflected in x
@@ -95,8 +95,9 @@ void Teapot::buildPatchReflect(int patchNum,
         -1.0f, 0.0f, 0.0f,
          0.0f, 1.0f, 0.0f,
          0.0f, 0.0f, 1.0f};
+
     if( reflectX ) {
-        buildPatch(patchRevV, B, dB, v, n, tc, el,
+        buildPatch(patchRevV, B, dB, in_v, in_n, in_tc, in_el,
                    index, elIndex, tcIndex, grid, QMatrix3x3(matxdata), false );
     }
 
@@ -108,21 +109,26 @@ void Teapot::buildPatchReflect(int patchNum,
     };
 
     if( reflectY ) {
-        buildPatch(patchRevV, B, dB, v, n, tc, el,
+        buildPatch(patchRevV, B, dB, in_v, in_n, in_tc, in_el,
                    index, elIndex, tcIndex, grid, QMatrix3x3(matydata), false );
     }
 
     // Patch reflected in x and y
+    float matxydata[9] = {
+       -1.0f,  0.0f, 0.0f,
+        0.0f, -1.0f, 0.0f,
+        0.0f,  0.0f, 1.0f
+    };
     if( reflectX && reflectY ) {
-        buildPatch(patch, B, dB, v, n, tc, el,
-                   index, elIndex, tcIndex, grid, QMatrix3x3(matxdata), true );
+        buildPatch(patch, B, dB, in_v, in_n, in_tc, in_el,
+                   index, elIndex, tcIndex, grid, QMatrix3x3(matxydata), true );
     }
 }
 
 void Teapot::buildPatch(QVector3D patch[][4],
                            float *B, float *dB,
-                           float *v, float *n, float *tc,
-                           unsigned int *el,
+                           float *in_v, float *in_n, float *in_tc,
+                           unsigned int *in_el,
                            int &index, int &elIndex, int &tcIndex, int grid, QMatrix3x3 reflect,
                            bool invertNormal)
 {
@@ -138,16 +144,16 @@ void Teapot::buildPatch(QVector3D patch[][4],
             if( invertNormal )
                 norm = -norm;
 
-            v[index] = pt.x();
-            v[index+1] = pt.y();
-            v[index+2] = pt.z();
+            in_v[index] = pt.x();
+            in_v[index+1] = pt.y();
+            in_v[index+2] = pt.z();
 
-            n[index] = norm.x();
-            n[index+1] = norm.y();
-            n[index+2] = norm.z();
+            in_n[index] = norm.x();
+            in_n[index+1] = norm.y();
+            in_n[index+2] = norm.z();
 
-            tc[tcIndex] = i * tcFactor;
-            tc[tcIndex+1] = j * tcFactor;
+            in_tc[tcIndex] = i * tcFactor;
+            in_tc[tcIndex+1] = j * tcFactor;
 
             index += 3;
             tcIndex += 2;
@@ -160,13 +166,13 @@ void Teapot::buildPatch(QVector3D patch[][4],
         int nextiStart = (i+1) * (grid+1) + startIndex;
         for( int j = 0; j < grid; j++)
         {
-            el[elIndex] = iStart + j;
-            el[elIndex+1] = nextiStart + j + 1;
-            el[elIndex+2] = nextiStart + j;
+            in_el[elIndex] = iStart + j;
+            in_el[elIndex+1] = nextiStart + j + 1;
+            in_el[elIndex+2] = nextiStart + j;
 
-            el[elIndex+3] = iStart + j;
-            el[elIndex+4] = iStart + j + 1;
-            el[elIndex+5] = nextiStart + j + 1;
+            in_el[elIndex+3] = iStart + j;
+            in_el[elIndex+4] = iStart + j + 1;
+            in_el[elIndex+5] = nextiStart + j + 1;
 
             elIndex += 6;
         }
@@ -175,6 +181,7 @@ void Teapot::buildPatch(QVector3D patch[][4],
 
 QVector3D Teapot::mattimesvec(QMatrix3x3 inmat, QVector3D invec)
 {
+
     QGenericMatrix<3,3,float> m1;
     for (int r = 0; r < 3; ++r)
         for (int c = 0; c < 3; ++c)
@@ -184,31 +191,29 @@ QVector3D Teapot::mattimesvec(QMatrix3x3 inmat, QVector3D invec)
     data[0] = invec.x();
     data[1] = invec.y();
     data[2] = invec.z();
+
     QGenericMatrix<1,3,float> m2(data);
 
     QGenericMatrix<1,3,float> result = m1 * m2;
-    /*
-    for (int r = 0; r < 3; ++r)
-        qDebug() << result(r, 0);
-    */
+
     return QVector3D(result(0,0), result(1,0), result(2,0));
 }
 
 void Teapot::getPatch( int patchNum, QVector3D patch[][4], bool reverseV )
 {
-    for( int u = 0; u < 4; u++) {          // Loop in u direction
-        for( int v = 0; v < 4; v++ ) {     // Loop in v direction
+    for( int uc = 0; uc < 4; uc++) {          // Loop in u direction
+        for( int vc = 0; vc < 4; vc++ ) {     // Loop in v direction
             if( reverseV ) {
-                patch[u][v] = QVector3D(
-                        TeapotData::cpdata[TeapotData::patchdata[patchNum][u*4+(3-v)]][0],
-                        TeapotData::cpdata[TeapotData::patchdata[patchNum][u*4+(3-v)]][1],
-                        TeapotData::cpdata[TeapotData::patchdata[patchNum][u*4+(3-v)]][2]
+                patch[uc][vc] = QVector3D(
+                        TeapotData::cpdata[TeapotData::patchdata[patchNum][uc*4+(3-vc)]][0],
+                        TeapotData::cpdata[TeapotData::patchdata[patchNum][uc*4+(3-vc)]][1],
+                        TeapotData::cpdata[TeapotData::patchdata[patchNum][uc*4+(3-vc)]][2]
                         );
             } else {
-                patch[u][v] = QVector3D(
-                        TeapotData::cpdata[TeapotData::patchdata[patchNum][u*4+v]][0],
-                        TeapotData::cpdata[TeapotData::patchdata[patchNum][u*4+v]][1],
-                        TeapotData::cpdata[TeapotData::patchdata[patchNum][u*4+v]][2]
+                patch[uc][vc] = QVector3D(
+                        TeapotData::cpdata[TeapotData::patchdata[patchNum][uc*4+vc]][0],
+                        TeapotData::cpdata[TeapotData::patchdata[patchNum][uc*4+vc]][1],
+                        TeapotData::cpdata[TeapotData::patchdata[patchNum][uc*4+vc]][2]
                         );
             }
         }
