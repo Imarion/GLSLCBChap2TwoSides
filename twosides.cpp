@@ -16,13 +16,13 @@
 
 MyWindow::~MyWindow()
 {
-    if (mProgram  != 0)   delete   mProgram;
+    if (mProgramSimpleADS != 0) delete mProgramSimpleADS;
+    if (mProgram2Sides    != 0) delete mProgram2Sides;
 }
 
-MyWindow::MyWindow() : currentTimeMs(0), currentTimeS(0)
+MyWindow::MyWindow()
+    : mProgramSimpleADS(0), mProgram2Sides(0), currentTimeMs(0), currentTimeS(0)
 {
-    mProgram  = 0;
-
     setSurfaceType(QWindow::OpenGLSurface);
     setFlags(Qt::Window | Qt::WindowSystemMenuHint | Qt::WindowTitleHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint);
 
@@ -81,11 +81,9 @@ void MyWindow::initialize()
     initShaders();
     initMatrices();
 
-    mRotationMatrixLocation = mProgram->uniformLocation("RotationMatrix");
+    mRotationMatrixLocation = mProgramSimpleADS->uniformLocation("RotationMatrix");
 
     glFrontFace(GL_CCW);
-    //glCullFace(GL_BACK);
-    //glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
 }
 
@@ -127,10 +125,13 @@ void MyWindow::CreateVertexBuffer()
 
 void MyWindow::initMatrices()
 {
-    //ModelMatrix.rotate(-35.0f, QVector3D(1.0f,0.0f,0.0f));
-    //ModelMatrix.rotate( 35.0f, QVector3D(0.0f,1.0f,0.0f));
-    ModelMatrix.translate(0.0f, -1.0f, 0.0f);
-    ModelMatrix.rotate( -90.0f, QVector3D(1.0f,0.0f,0.0f));
+    ModelMatrix2Sided.translate(1.6f, 0.5f, 0.0f);
+    ModelMatrix2Sided.rotate( -90.0f, QVector3D(1.0f,0.0f,0.0f));
+    ModelMatrix2Sided.scale(0.50f);
+
+    ModelMatrixSimpleADS.translate(-1.6f, 0.5f, 0.0f);
+    ModelMatrixSimpleADS.rotate( -90.0f, QVector3D(1.0f,0.0f,0.0f));
+    ModelMatrixSimpleADS.scale(0.50f);
 
     ViewMatrix.lookAt(QVector3D(2.0f,4.0f,2.0f), QVector3D(0.0f,0.0f,0.0f), QVector3D(0.0f,1.0f,0.0f));
 }
@@ -173,33 +174,62 @@ void MyWindow::render()
     //ModelMatrix.rotate(0.3f, QVector3D(0.1f, 0.0f, 0.1f));
 
     mFuncs->glBindVertexArray(mVAO);
+
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
-    mProgram->bind();
+    mProgramSimpleADS->bind();
     {
         QVector4D worldLight = QVector4D(2.0f, 4.0f, 2.0f, 1.0f);
-        mProgram->setUniformValue("Light.Position", ViewMatrix * worldLight );
+        mProgramSimpleADS->setUniformValue("Light.Position", ViewMatrix * worldLight );
 
-        mProgram->setUniformValue("Material.Kd", 0.9f, 0.5f, 0.3f);
-        mProgram->setUniformValue("Light.Ld", 1.0f, 1.0f, 1.0f);
-        mProgram->setUniformValue("Material.Ka", 0.9f, 0.5f, 0.3f);
-        mProgram->setUniformValue("Light.La", 0.4f, 0.4f, 0.4f);
-        mProgram->setUniformValue("Material.Ks", 0.8f, 0.8f, 0.8f);
-        mProgram->setUniformValue("Light.Ls", 1.0f, 1.0f, 1.0f);
-        mProgram->setUniformValue("Material.Shininess", 100.0f);
+        mProgramSimpleADS->setUniformValue("Material.Kd", 0.9f, 0.5f, 0.3f);
+        mProgramSimpleADS->setUniformValue("Light.Ld", 1.0f, 1.0f, 1.0f);
+        mProgramSimpleADS->setUniformValue("Material.Ka", 0.9f, 0.5f, 0.3f);
+        mProgramSimpleADS->setUniformValue("Light.La", 0.4f, 0.4f, 0.4f);
+        mProgramSimpleADS->setUniformValue("Material.Ks", 0.8f, 0.8f, 0.8f);
+        mProgramSimpleADS->setUniformValue("Light.Ls", 1.0f, 1.0f, 1.0f);
+        mProgramSimpleADS->setUniformValue("Material.Shininess", 100.0f);
 
-        QMatrix4x4 mv = ViewMatrix * ModelMatrix;        
-        mProgram->setUniformValue("ModelViewMatrix", mv);
-        mProgram->setUniformValue("NormalMatrix", mv.normalMatrix());
-        mProgram->setUniformValue("MVP", ProjectionMatrix * mv);
+        QMatrix4x4 mv1 = ViewMatrix * ModelMatrixSimpleADS;
+        mProgramSimpleADS->setUniformValue("ModelViewMatrix", mv1);
+        mProgramSimpleADS->setUniformValue("NormalMatrix", mv1.normalMatrix());
+        mProgramSimpleADS->setUniformValue("MVP", ProjectionMatrix * mv1);
 
         glDrawElements(GL_TRIANGLES, 6 * mTeapot->getnFaces(), GL_UNSIGNED_INT, ((GLubyte *)NULL + (0)));
 
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
     }
-    mProgram->release();
+    mProgramSimpleADS->release();
+
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+
+    mProgram2Sides->bind();
+    {
+        QVector4D worldLight = QVector4D(2.0f, 4.0f, 2.0f, 1.0f);
+        mProgram2Sides->setUniformValue("Light.Position", ViewMatrix * worldLight );
+
+        mProgram2Sides->setUniformValue("Material.Kd", 0.9f, 0.5f, 0.3f);
+        mProgram2Sides->setUniformValue("Light.Ld", 1.0f, 1.0f, 1.0f);
+        mProgram2Sides->setUniformValue("Material.Ka", 0.9f, 0.5f, 0.3f);
+        mProgram2Sides->setUniformValue("Light.La", 0.4f, 0.4f, 0.4f);
+        mProgram2Sides->setUniformValue("Material.Ks", 0.8f, 0.8f, 0.8f);
+        mProgram2Sides->setUniformValue("Light.Ls", 1.0f, 1.0f, 1.0f);
+        mProgram2Sides->setUniformValue("Material.Shininess", 100.0f);
+
+        QMatrix4x4 mv2 = ViewMatrix * ModelMatrix2Sided;
+        mProgram2Sides->setUniformValue("ModelViewMatrix", mv2);
+        mProgram2Sides->setUniformValue("NormalMatrix", mv2.normalMatrix());
+        mProgram2Sides->setUniformValue("MVP", ProjectionMatrix * mv2);
+
+        glDrawElements(GL_TRIANGLES, 6 * mTeapot->getnFaces(), GL_UNSIGNED_INT, ((GLubyte *)NULL + (0)));
+
+        glDisableVertexAttribArray(0);
+        glDisableVertexAttribArray(1);
+    }
+    mProgram2Sides->release();
 
     mContext->swapBuffers(this);
 }
@@ -211,26 +241,42 @@ void MyWindow::initShaders()
     QFile         shaderFile;
     QByteArray    shaderSource;
 
-    //mTreeProgram
-    // Shader 1
-    //shaderFile.setFileName(":/vshader_ads.txt");
+    //Simple ADS
+    shaderFile.setFileName(":/vshader_ads.txt");
+    shaderFile.open(QIODevice::ReadOnly);
+    shaderSource = shaderFile.readAll();
+    shaderFile.close();
+    qDebug() << "vertex simple ADS compile: " << vShader.compileSourceCode(shaderSource);
+
+    shaderFile.setFileName(":/fshader_ads.txt");
+    shaderFile.open(QIODevice::ReadOnly);
+    shaderSource = shaderFile.readAll();
+    shaderFile.close();
+    qDebug() << "frag   simple ADS compile: " << fShader.compileSourceCode(shaderSource);
+
+    mProgramSimpleADS = new (QOpenGLShaderProgram);
+    mProgramSimpleADS->addShader(&vShader);
+    mProgramSimpleADS->addShader(&fShader);
+    qDebug() << "shader link tree: " << mProgramSimpleADS->link();
+
+    //2 sided ADS
     shaderFile.setFileName(":/vshader_2sides.txt");
     shaderFile.open(QIODevice::ReadOnly);
     shaderSource = shaderFile.readAll();
     shaderFile.close();
-    qDebug() << "vertex tree compile: " << vShader.compileSourceCode(shaderSource);
+    qDebug() << "vertex 2-sided compile: " << vShader.compileSourceCode(shaderSource);
 
-    //shaderFile.setFileName(":/fshader_ads.txt");
     shaderFile.setFileName(":/fshader_2sides.txt");
     shaderFile.open(QIODevice::ReadOnly);
     shaderSource = shaderFile.readAll();
     shaderFile.close();
-    qDebug() << "frag   tree compile: " << fShader.compileSourceCode(shaderSource);
+    qDebug() << "frag   2-sided compile: " << fShader.compileSourceCode(shaderSource);
 
-    mProgram = new (QOpenGLShaderProgram);
-    mProgram->addShader(&vShader);
-    mProgram->addShader(&fShader);
-    qDebug() << "shader link tree: " << mProgram->link();
+    mProgram2Sides = new (QOpenGLShaderProgram);
+    mProgram2Sides->addShader(&vShader);
+    mProgram2Sides->addShader(&fShader);
+    qDebug() << "shader link 2-sided: " << mProgram2Sides->link();
+
 }
 
 void MyWindow::PrepareTexture(GLenum TextureTarget, const QString& FileName, GLuint& TexObject, bool flip)
