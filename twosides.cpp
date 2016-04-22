@@ -171,7 +171,8 @@ void MyWindow::render()
 
     //QMatrix4x4 RotationMatrix;
     //RotationMatrix.rotate(EvolvingVal, QVector3D(0.1f, 0.0f, 0.1f));
-    //ModelMatrix.rotate(0.3f, QVector3D(0.1f, 0.0f, 0.1f));
+    ModelMatrixSimpleADS.rotate(0.3f, QVector3D(0.1f, 0.0f, 0.1f));
+    ModelMatrix2Sided.rotate(0.3f, QVector3D(0.1f, 0.0f, 0.1f));
 
     mFuncs->glBindVertexArray(mVAO);
 
